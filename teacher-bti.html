@@ -1,0 +1,396 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Teacher-BTI 适配老师测试</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <script>
+        // Tailwind 配置
+        tailwind.config = {
+            theme: {
+                extend: {
+                    colors: {
+                        primary: '#5B9BD5',
+                        secondary: '#70AD47',
+                        accent: '#FFC000',
+                        dark: '#2F3542',
+                        light: '#F8F9FA'
+                    },
+                    fontFamily: {
+                        sans: ['system-ui', 'sans-serif']
+                    }
+                }
+            }
+        }
+    </script>
+    <style type="text/tailwindcss">
+        @layer utilities {
+            .content-auto {
+                content-visibility: auto;
+            }
+            .teacher-shadow {
+                box-shadow: 0 10px 30px rgba(0,0,0,0.1);
+            }
+            .option-hover {
+                transition: all 0.3s ease;
+            }
+            .option-hover:hover {
+                transform: translateY(-2px);
+                box-shadow: 0 5px 15px rgba(91,155,213,0.2);
+            }
+            .slide-in {
+                animation: slideIn 0.5s ease forwards;
+            }
+            @keyframes slideIn {
+                from { opacity: 0; transform: translateX(20px); }
+                to { opacity: 1; transform: translateX(0); }
+            }
+        }
+    </style>
+</head>
+<body class="bg-light text-dark min-h-screen">
+    <!-- 开始页面 -->
+    <div id="start-page" class="flex flex-col items-center justify-center min-h-screen p-4 text-center">
+        <div class="bg-white rounded-3xl p-8 md:p-12 teacher-shadow max-w-2xl w-full">
+            <div class="text-7xl mb-6 animate-bounce">
+                <i class="fa-solid fa-chalkboard-teacher text-primary"></i>
+            </div>
+            <h1 class="text-4xl md:text-5xl font-bold mb-4 text-primary">Teacher-BTI</h1>
+            <h2 class="text-xl md:text-2xl mb-8 text-secondary font-semibold">测一测最适合你的老师</h2>
+            <p class="mb-10 text-gray-600 leading-relaxed">
+                每位老师都有独特的风格，通过12道题目，找出与你最契合的专属老师！
+            </p>
+            <button id="start-btn" class="bg-primary text-white px-10 py-4 rounded-full text-xl font-semibold hover:bg-primary/90 transition-all shadow-lg hover:shadow-xl">
+                开始测试
+            </button>
+            <div class="mt-8 text-sm text-gray-400">
+                包含10位特色老师，精准匹配你的学习偏好
+            </div>
+        </div>
+    </div>
+
+    <!-- 测试页面 -->
+    <div id="quiz-page" class="hidden p-4 py-10 max-w-3xl mx-auto">
+        <div class="bg-white rounded-3xl p-6 md:p-10 teacher-shadow">
+            <div class="flex justify-between items-center mb-6">
+                <h2 class="text-2xl font-bold text-primary">Teacher-BTI 测试</h2>
+                <span id="progress" class="bg-secondary text-white px-4 py-2 rounded-full font-medium">0/12</span>
+            </div>
+            
+            <!-- 进度条 -->
+            <div class="w-full bg-gray-200 rounded-full h-2.5 mb-8">
+                <div id="progress-bar" class="bg-secondary h-2.5 rounded-full" style="width: 0%"></div>
+            </div>
+            
+            <!-- 题目容器 -->
+            <div id="question-container" class="slide-in">
+                <h3 id="question-text" class="text-xl md:text-2xl font-semibold mb-6">题目加载中...</h3>
+                <div id="options-container" class="space-y-4">
+                    <!-- 选项将通过JS生成 -->
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- 结果页面 -->
+    <div id="result-page" class="hidden p-4 py-10 max-w-3xl mx-auto">
+        <div class="bg-white rounded-3xl p-6 md:p-10 teacher-shadow text-center">
+            <h2 class="text-3xl font-bold text-primary mb-2">最适合你的老师</h2>
+            <p class="text-gray-500 mb-8">Teacher-BTI 测试结果</p>
+            
+            <!-- 老师结果 -->
+            <div id="teacher-result" class="mb-8">
+                <div class="text-8xl mb-4">
+                    <i id="teacher-icon" class="fa-solid fa-chalkboard-teacher text-primary"></i>
+                </div>
+                <h3 id="teacher-name" class="text-3xl font-bold mb-2">老师姓名</h3>
+                <div id="teacher-match" class="inline-block bg-secondary/20 text-secondary px-4 py-2 rounded-full font-semibold mb-4">
+                    匹配度 95%
+                </div>
+                <p id="teacher-desc" class="text-gray-600 leading-relaxed text-lg">
+                    老师专属性格解读
+                </p>
+            </div>
+            
+            <!-- 重新测试 -->
+            <button id="restart-btn" class="bg-primary text-white px-8 py-3 rounded-full text-lg font-semibold hover:bg-primary/90 transition-all shadow-md">
+                重新测试
+            </button>
+        </div>
+    </div>
+
+    <script>
+        // 10位老师配置（完全贴合你的描述）
+        const teachers = [
+            { 
+                name: "陈振锋", 
+                icon: "fa-book-open", 
+                color: "#5B9BD5", 
+                desc: "严谨认真、教学水平超高，有明确的教学大纲和计划，做事很卷，班会会安排上自习。偶尔容易忘事，对女生更温和，男生态度偏严肃，平时带小蜜蜂，偶尔会找不到人。" 
+            },
+            { 
+                name: "林慧镜", 
+                icon: "fa-comments", 
+                color: "#70AD47", 
+                desc: "随性洒脱、和蔼可亲，上课喜欢聊天讲故事，半节课都在轻松互动，主打玩中学，作文教学特别出色，不怎么布置作业，不带小蜜蜂。" 
+            },
+            { 
+                name: "曾煜彬", 
+                icon: "fa-smile", 
+                color: "#FFC000", 
+                desc: "年轻帅气、字写得超好看，白白嫩嫩，能和学生打成一片，爱和大家开玩笑、频繁点头交流，相处完全没距离感，不带小蜜蜂。" 
+            },
+            { 
+                name: "林友锦", 
+                icon: "fa-lightbulb", 
+                color: "#E74C3C", 
+                desc: "资深王牌教师，反对死记硬背，注重原理和课本理解，常年参与高考出卷，上课超有趣、肢体动作多，爱讲出卷小故事，不用PPT，偶尔难找。" 
+            },
+            { 
+                name: "吴存国", 
+                icon: "fa-user-tie", 
+                color: "#8E44AD", 
+                desc: "资深老教师，板书工整好看，说话幽默风趣，教学经验极其丰富，因年纪稍大偶尔有代沟，沟通上会有一点点小困难。" 
+            },
+            { 
+                name: "纪欢峰", 
+                icon: "fa-microphone", 
+                color: "#34495E", 
+                desc: "上课认真、风格幽默，带北方腔调、留小胡子，随时能找到人，答疑超级认真，晚上会赶末班车回家，偶尔论证说服力稍弱，不带小蜜蜂。" 
+            },
+            { 
+                name: "李丹", 
+                icon: "fa-user", 
+                color: "#FF6B6B", 
+                desc: "资深美女教师，长相漂亮、说话温柔，性格软和，唯一小特点是记性不太好，上课不带小蜜蜂，亲和力拉满。" 
+            },
+            { 
+                name: "陈瑞森", 
+                icon: "fa-laptop", 
+                color: "#1ABC9C", 
+                desc: "AI运用大师，喜欢公示带名字的成绩单，说话温柔细致，上课会携带小蜜蜂，教学风格规整又贴心。" 
+            },
+            { 
+                name: "张朝勇", 
+                icon: "fa-running", 
+                color: "#F39C12", 
+                desc: "热爱运动、活力满满，浑身充满正能量，上课状态朝气蓬勃，风格直爽轻快，不带小蜜蜂。" 
+            },
+            { 
+                name: "史晨华", 
+                icon: "fa-feather", 
+                color: "#9B59B6", 
+                desc: "温柔优雅、讲解清晰，讲课有理有据、逻辑超强，气质优雅大方，上课会带小蜜蜂，听她讲课是一种享受。" 
+            }
+        ];
+
+        // 12道精准匹配测试题
+        const questions = [
+            {
+                text: "你更喜欢哪种上课风格？",
+                options: [
+                    { text: "严谨规整，有明确教学计划", teacher: [0] },
+                    { text: "轻松聊天，边玩边学", teacher: [1] },
+                    { text: "活泼互动，和老师打成一片", teacher: [2] },
+                    { text: "讲透原理，有趣不枯燥", teacher: [3] }
+                ]
+            },
+            {
+                text: "你对作业量的偏好是？",
+                options: [
+                    { text: "适量即可，不用太多", teacher: [1] },
+                    { text: "按教学计划正常布置", teacher: [0] },
+                    { text: "越少越好，轻松为主", teacher: [7] },
+                    { text: "无所谓，能学会就行", teacher: [9] }
+                ]
+            },
+            {
+                text: "找老师答疑时，你希望？",
+                options: [
+                    { text: "随时能找到，答疑超认真", teacher: [5] },
+                    { text: "温柔讲解，逻辑清晰", teacher: [9] },
+                    { text: "虽然偶尔忘事，但教学够强", teacher: [0] },
+                    { text: "经验丰富，讲得透彻", teacher: [4] }
+                ]
+            },
+            {
+                text: "你喜欢的老师性格是？",
+                options: [
+                    { text: "温柔优雅，气质超好", teacher: [9] },
+                    { text: "幽默风趣，没架子", teacher: [2] },
+                    { text: "严谨严肃，做事认真", teacher: [0] },
+                    { text: "随性和蔼，亲切好相处", teacher: [1] }
+                ]
+            },
+            {
+                text: "老师的教学方式你更看重？",
+                options: [
+                    { text: "反对死记硬背，重原理", teacher: [3] },
+                    { text: "板书好看，条理清晰", teacher: [4] },
+                    { text: "AI辅助，教学新潮", teacher: [7] },
+                    { text: "讲解细致，有理有据", teacher: [9] }
+                ]
+            },
+            {
+                text: "你能接受老师的小缺点是？",
+                options: [
+                    { text: "偶尔记性不好", teacher: [0,7] },
+                    { text: "偶尔难找", teacher: [3] },
+                    { text: "偶尔有代沟", teacher: [4] },
+                    { text: "偶尔论证说服力弱", teacher: [5] }
+                ]
+            },
+            {
+                text: "你喜欢的课堂氛围是？",
+                options: [
+                    { text: "安静自律，上自习也可", teacher: [0] },
+                    { text: "热热闹闹，开玩笑互动", teacher: [2] },
+                    { text: "轻松随意，聊天讲故事", teacher: [1] },
+                    { text: "活力满满，充满朝气", teacher: [8] }
+                ]
+            },
+            {
+                text: "老师的外在特点你更在意？",
+                options: [
+                    { text: "年轻帅气，白白嫩嫩", teacher: [2] },
+                    { text: "漂亮优雅，温柔大方", teacher: [7,9] },
+                    { text: "有特色腔调，留小胡子", teacher: [5] },
+                    { text: "资深稳重，经验老道", teacher: [4] }
+                ]
+            },
+            {
+                text: "你希望老师的教学工具？",
+                options: [
+                    { text: "带小蜜蜂，声音清晰", teacher: [0,7,9] },
+                    { text: "不用小蜜蜂，自然说话", teacher: [1,2,3,4,5,8] },
+                    { text: "不用PPT，纯讲课", teacher: [3] },
+                    { text: "会用AI，新潮教学", teacher: [7] }
+                ]
+            },
+            {
+                text: "老师对你的态度你希望？",
+                options: [
+                    { text: "对女生温和，男生偏严肃", teacher: [0] },
+                    { text: "一视同仁，亲切温柔", teacher: [9] },
+                    { text: "平等相处，像朋友", teacher: [2] },
+                    { text: "和蔼耐心，没有距离", teacher: [1] }
+                ]
+            },
+            {
+                text: "你喜欢老师的额外特质？",
+                options: [
+                    { text: "热爱运动，活力爆棚", teacher: [8] },
+                    { text: "字写得超级好看", teacher: [2] },
+                    { text: "常年出高考卷，实力强", teacher: [3] },
+                    { text: "答疑认真，赶末班车也负责", teacher: [5] }
+                ]
+            },
+            {
+                text: "你最看重老师的哪一点？",
+                options: [
+                    { text: "教学水平超高", teacher: [0] },
+                    { text: "相处轻松愉快", teacher: [1] },
+                    { text: "讲解清晰易懂", teacher: [9] },
+                    { text: "随时能找到人", teacher: [5] }
+                ]
+            }
+        ];
+
+        // DOM元素
+        const startPage = document.getElementById('start-page');
+        const quizPage = document.getElementById('quiz-page');
+        const resultPage = document.getElementById('result-page');
+        const startBtn = document.getElementById('start-btn');
+        const restartBtn = document.getElementById('restart-btn');
+        const questionText = document.getElementById('question-text');
+        const optionsContainer = document.getElementById('options-container');
+        const progressText = document.getElementById('progress');
+        const progressBar = document.getElementById('progress-bar');
+        const teacherIcon = document.getElementById('teacher-icon');
+        const teacherName = document.getElementById('teacher-name');
+        const teacherMatch = document.getElementById('teacher-match');
+        const teacherDesc = document.getElementById('teacher-desc');
+
+        // 测试状态
+        let currentQuestion = 0;
+        let score = Array(10).fill(0);
+
+        // 开始测试
+        startBtn.addEventListener('click', () => {
+            startPage.classList.add('hidden');
+            quizPage.classList.remove('hidden');
+            loadQuestion();
+        });
+
+        // 重新测试
+        restartBtn.addEventListener('click', () => {
+            currentQuestion = 0;
+            score = Array(10).fill(0);
+            resultPage.classList.add('hidden');
+            quizPage.classList.remove('hidden');
+            loadQuestion();
+        });
+
+        // 加载题目
+        function loadQuestion() {
+            if (currentQuestion >= questions.length) {
+                showResult();
+                return;
+            }
+
+            const question = questions[currentQuestion];
+            questionText.textContent = `${currentQuestion + 1}. ${question.text}`;
+            
+            progressText.textContent = `${currentQuestion + 1}/${questions.length}`;
+            progressBar.style.width = `${((currentQuestion + 1) / questions.length) * 100}%`;
+            
+            optionsContainer.innerHTML = '';
+            
+            question.options.forEach((option, index) => {
+                const optionEl = document.createElement('div');
+                optionEl.className = 'option-hover bg-light border-2 border-gray-200 rounded-xl p-4 cursor-pointer';
+                optionEl.innerHTML = `
+                    <div class="flex items-center">
+                        <div class="w-6 h-6 rounded-full bg-primary/20 text-primary flex items-center justify-center mr-3">
+                            ${index + 1}
+                        </div>
+                        <span class="text-lg">${option.text}</span>
+                    </div>
+                `;
+                
+                optionEl.addEventListener('click', () => selectOption(option));
+                optionsContainer.appendChild(optionEl);
+            });
+        }
+
+        // 选择选项
+        function selectOption(option) {
+            option.teacher.forEach(index => {
+                score[index] += 1;
+            });
+            currentQuestion++;
+            loadQuestion();
+        }
+
+        // 显示结果
+        function showResult() {
+            quizPage.classList.add('hidden');
+            resultPage.classList.remove('hidden');
+            
+            let maxScore = Math.max(...score);
+            let teacherIndex = score.indexOf(maxScore);
+            const teacher = teachers[teacherIndex];
+            
+            let matchPercent = Math.round((maxScore / questions.length) * 100);
+            
+            teacherIcon.className = `fa-solid ${teacher.icon} text-8xl`;
+            teacherIcon.style.color = teacher.color;
+            teacherName.textContent = teacher.name;
+            teacherMatch.textContent = `匹配度 ${matchPercent}%`;
+            teacherDesc.textContent = teacher.desc;
+        }
+    </script>
+</body>
+</html>
